@@ -3,3 +3,4 @@ lock.pid
 LOG
 config.sh
 node_modules/
+ecosystem.config.cjs
