@@ -121,8 +121,8 @@ const refresh = async () => {
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 	refresh();
-	// 10 mins
-	setTimeout(refresh, 10*1000);
+	// 5 mins
+	setInterval(refresh, 5*60*1000);
 });
 
 client.on(Events.MessageCreate, async interaction => {
