@@ -29,7 +29,7 @@ function isOlderThan(date, diff) {
 }
 
 // X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-const threshold = 1 * 24 * 60 * 60 * 1000;
+const threshold = 2 * 24 * 60 * 60 * 1000;
 
 export async function check() {
 	const news = await getCurrent();
