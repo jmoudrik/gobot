@@ -28,8 +28,8 @@ function isOlderThan(date, diff) {
 	return age > diff;
 }
 
-// 7 days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-const oneWeek = 7 * 24 * 60 * 60 * 1000;
+// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
+const threshold = 1 * 24 * 60 * 60 * 1000;
 
 export async function check() {
 	const news = await getCurrent();
@@ -42,7 +42,7 @@ export async function check() {
 
 		const mem = olds.filter((o) => o.id == n.id);
 		if (mem.length == 0 ) {
-			if(isOlderThan(n.updated, oneWeek)){
+			if(isOlderThan(n.updated, threshold)){
 				flags.push('new-but-old');
 			} else {
 				console.log(`new article: ${n.id} '${n.title}'`);
