@@ -122,7 +122,7 @@ const fmtnew = async (p) => {
 
 const refresh = async () => {
 	let sentSomething = false;
-	console.log("checking...")
+	console.log(`${new Date()} checking...`)
 	for (const p of (await check()).reverse()) {
 		if (p.flags.includes("new")) {
 			const msg = await fmtnew(p);
