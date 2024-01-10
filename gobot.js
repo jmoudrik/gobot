@@ -141,7 +141,7 @@ client.once(Events.ClientReady, readyClient => {
 	refresh();
 	// 5 mins
 	//setInterval(refresh, 5*60*1000);
-	setInterval(refresh, 20*1000);
+	setInterval(refresh, 5* 60*1000);
 });
 
 client.on(Events.MessageCreate, async interaction => {
