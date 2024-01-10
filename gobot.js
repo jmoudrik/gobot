@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -6,9 +7,10 @@ const __dirname = path.dirname(__filename);
 
 import * as fs from 'fs';
 
-import { userMention, bold, italic, strikethrough, underscore, spoiler, quote, blockQuote, hyperlink, hideLinkEmbed, Client, Events, GatewayIntentBits, Collection } from 'discord.js';
+import { AttachmentBuilder, userMention, bold, italic, strikethrough, underscore, spoiler, quote, blockQuote, hyperlink, hideLinkEmbed, Client, Events, GatewayIntentBits, Collection } from 'discord.js';
 
 import { check } from './diff.js';
+import { picfetch } from './fetchpic.js';
 
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
 const CHANNEL_ID = process.env.CHANNEL_ID ?? '';
@@ -42,7 +44,7 @@ async function load_cmds() {
 
 const kluci = ['lukan', 'siscurge', 'tomáš grosser'];
 const holky = ['mamutik', 'ada'];
-const discordmap = { 'siscurge': '296387064566644736' }
+const discordmap = { 'siscurge': '296387064566644736', 'lukan':'299594384373186560' }
 
 const getuid = (uname) => {
 	return discordmap[uname.toLowerCase()] ?? null;
@@ -64,51 +66,67 @@ const fmtnapsal = (who) => {
 	return `napsal(a)`;
 }
 
-const fmtnew = (p) => {
+const fmtnew = async (p) => {
 	//return `${bold()} ${fmtnapsal(p.autor)} nový článek na goweb (${p['updated-nice']}):\n${hyperlink(p.title, p.link)}`;
-	const exampleEmbed = {
-		color: 0x0099ff,
+	console.dir(p)
+	let imgurl;
+	let extra = {};
+	if(p.img){
+		const blob = await picfetch(p.img);
+		const len = blob?.byteLength ?? 0 ;
+		if(len > 0) {
+			console.log(`pic: got ${len}B for ${p.img}`);
+			// arraybuffer -> buffer
+			const name = 'pic.jpg';
+			const file = new AttachmentBuilder(Buffer.from(blob), {name});
+			imgurl = 'attachment://'+name;
+			extra['files'] = [file];
+			//console.dir(file)
+		}
+	}
+	
+	const embed = {
+		color: 0xff9500,
 		title: p.title,
 		url: p.link,
 		author: {
-			name: p.autor,
-			//icon_url: 'https://i.imgur.com/AfFp7pu.png',
-			//url: 'https://discord.js.org',
+			name: 'goweb.cz',
+			icon_url: 'https://i.imgur.com/i0sGv6R.png',
+			url: 'https://goweb.cz',
 		},
-		description: p['txt'],
+		description:  p['txt'],
 		/*
 		thumbnail: {
 			url: 'https://i.imgur.com/AfFp7pu.png',
 		},
 		*/
 		fields: [
+			{ name: 'Autor:', value: `${optmention(p.autor)}`, inline: true, },
+			///{ name: 'Inline field title', value: 'Some value here', inline: true, },
 			{
 				name: '',
 				value: hyperlink("Otevřít komentáře", p['comment-link']),
-				inline: false,
+				inline: true,
 			},
-			/*
-			{ name: 'Inline field title', value: 'Some value here', inline: true, },
-			{ name: 'Inline field title', value: 'Some value here', inline: true, },
-			*/
 		],
-		image: {
-			url: p['img'],
-		},
+		image: { url: imgurl, },
 		//timestamp: p['updated'],
 		footer: {
 			text: p['updated-nice'],
 		},
 	};
-	//console.dir(exampleEmbed);
-	return { embeds: [exampleEmbed] };
+	const ret = { embeds: [embed], ...extra };
+	//console.log(JSON.stringify(embed, undefined, 2));
+	return ret;
 }
 
 const refresh = async () => {
 	let sentSomething = false;
+	console.log("checking...")
 	for (const p of (await check()).reverse()) {
 		if (p.flags.includes("new")) {
-			send(fmtnew(p));
+			const msg = await fmtnew(p);
+			send(msg);
 			sentSomething = true;
 		}
 	}
@@ -122,7 +140,8 @@ client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 	refresh();
 	// 5 mins
-	setInterval(refresh, 5*60*1000);
+	//setInterval(refresh, 5*60*1000);
+	setInterval(refresh, 20*1000);
 });
 
 client.on(Events.MessageCreate, async interaction => {
@@ -131,7 +150,7 @@ client.on(Events.MessageCreate, async interaction => {
 
 client.on(Events.InteractionCreate, async interaction => {
 	//console.dir(interaction);
-	console.log(interaction.commandName);
+	console.log({user:interaction.user, commandName: interaction.commandName });
 	if (!interaction.isChatInputCommand()) return;
 
 	const command = interaction.client.commands.get(interaction.commandName);
