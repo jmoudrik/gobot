@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -7,19 +6,18 @@ const __dirname = path.dirname(__filename);
 
 import * as fs from 'fs';
 
-import { AttachmentBuilder, userMention, bold, italic, strikethrough, underscore, spoiler, quote, blockQuote, hyperlink, hideLinkEmbed, Client, Events, GatewayIntentBits, Collection } from 'discord.js';
+import { Client, Events, GatewayIntentBits, Collection } from 'discord.js';
 
 import { check } from './diff.js';
-import { picfetch } from './fetchpic.js';
+import { fmt } from './fmt.js';
 
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
 const CHANNEL_ID = process.env.CHANNEL_ID ?? '';
-console.log({ AUTH_TOKEN, CHANNEL_ID })
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
-const send = (msg) => client.channels.cache.get(CHANNEL_ID).send(msg);
+const send = (chid, msg) => client.channels.cache.get(chid).send(msg);
 
 async function load_cmds() {
 	const foldersPath = path.join(__dirname, 'commands');
@@ -42,106 +40,36 @@ async function load_cmds() {
 	}
 }
 
-const kluci = ['lukan', 'siscurge', 'tomáš grosser'];
-const holky = ['mamutik', 'ada'];
-const discordmap = { 'siscurge': '296387064566644736', 'lukan':'299594384373186560' }
-
-const getuid = (uname) => {
-	return discordmap[uname.toLowerCase()] ?? null;
-}
-
-const optmention = (uname) => {
-	const uid = getuid(uname);
-	if (!uid)
-		return uname;
-	return userMention(uid);
-}
-
-const fmtnapsal = (who) => {
-	const norm = who.toLowerCase();
-	if (kluci.includes(norm))
-		return `napsal`;
-	if (holky.includes(norm))
-		return `napsala`;
-	return `napsal(a)`;
-}
-
-const fmtnew = async (p) => {
-	//return `${bold()} ${fmtnapsal(p.autor)} nový článek na goweb (${p['updated-nice']}):\n${hyperlink(p.title, p.link)}`;
-	console.dir(p)
-	let imgurl;
-	let extra = {};
-	if(p.img){
-		const blob = await picfetch(p.img);
-		const len = blob?.byteLength ?? 0 ;
-		if(len > 0) {
-			console.log(`pic: got ${len}B for ${p.img}`);
-			// arraybuffer -> buffer
-			const name = 'pic.jpg';
-			const file = new AttachmentBuilder(Buffer.from(blob), {name});
-			imgurl = 'attachment://'+name;
-			extra['files'] = [file];
-			//console.dir(file)
-		}
+const sites = {
+	'goweb': {
+		// every 5 mins
+		interval: 5 * 60 * 1000,
+	},
+	'egf': {
+		interval: 10 * 60 * 1000,
 	}
-	
-	const embed = {
-		color: 0xff9500,
-		title: p.title,
-		url: p.link,
-		author: {
-			name: 'goweb.cz',
-			icon_url: 'https://i.imgur.com/i0sGv6R.png',
-			url: 'https://goweb.cz',
-		},
-		description:  p['txt'],
-		/*
-		thumbnail: {
-			url: 'https://i.imgur.com/AfFp7pu.png',
-		},
-		*/
-		fields: [
-			{ name: 'Autor:', value: `${optmention(p.autor)}`, inline: true, },
-			///{ name: 'Inline field title', value: 'Some value here', inline: true, },
-			{
-				name: '',
-				value: hyperlink("Otevřít komentáře", p['comment-link']),
-				inline: true,
-			},
-		],
-		image: { url: imgurl, },
-		//timestamp: p['updated'],
-		footer: {
-			text: p['updated-nice'],
-		},
-	};
-	const ret = { embeds: [embed], ...extra };
-	//console.log(JSON.stringify(embed, undefined, 2));
-	return ret;
-}
+};
 
-const refresh = async () => {
-	let sentSomething = false;
-	console.log(`${new Date()} checking...`)
-	for (const p of (await check()).reverse()) {
-		if (p.flags.includes("new")) {
-			const msg = await fmtnew(p);
-			send(msg);
-			sentSomething = true;
-		}
+const refresh = async (key) => {
+	console.log(`${(new Date()).toString()}: checking ${key}`)
+	const updates = await check(key);
+	const msgs = await fmt(key, updates);
+	for (const msg of msgs) {
+		send(CHANNEL_ID, msg).catch(console.error);
 	}
-	if(!sentSomething){
+	if(msgs.length == 0){
 		console.log('nop');
 	}
-	return sentSomething;
+	return msgs.length > 0;
 }
 
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-	refresh();
-	// 5 mins
-	//setInterval(refresh, 5*60*1000);
-	setInterval(refresh, 5* 60*1000);
+	for (const key of Object.keys(sites)) {
+		const { interval } = sites[key];
+		refresh(key);
+		setInterval(() => refresh(key), interval);
+	}
 });
 
 client.on(Events.MessageCreate, async interaction => {
@@ -150,7 +78,7 @@ client.on(Events.MessageCreate, async interaction => {
 
 client.on(Events.InteractionCreate, async interaction => {
 	//console.dir(interaction);
-	console.log({user:interaction.user, commandName: interaction.commandName });
+	console.log({ user: interaction.user, commandName: interaction.commandName });
 	if (!interaction.isChatInputCommand()) return;
 
 	const command = interaction.client.commands.get(interaction.commandName);

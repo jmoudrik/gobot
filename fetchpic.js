@@ -2,12 +2,16 @@ import fetch from "node-fetch";
 
 export const picfetch = async (url) => {
 	const ret = await fetch(url);
-	console.log("PIC" + ret.status)
 	if (ret.status != 200) {
+		console.log("picfetch: failed with " + ret.status);
 		return null;
 	}
 
-	return ret.arrayBuffer();
+	const blob = await ret.arrayBuffer();
+	const len = blob.byteLength ?? 0;
+	console.log(`picfetch: got ${len}B for '${url}'`);
+
+	return Buffer.from(blob);
 }
 
 /*
