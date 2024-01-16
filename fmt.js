@@ -42,10 +42,10 @@ const preppic = async (url) => {
 			//console.dir(file)
 		}
 	}
-	return {imgurl, extra};
+	return { imgurl, extra };
 }
 
-const fmtnew_goweb = async (p) => {
+const fmtnew_post_goweb = async (p) => {
 	{
 		const txt = `${p.autor} ${bold(optmention(p.autor))} ${fmtnapsal(p.autor)} (${p['updated-nice']}):\n${hyperlink(p.title, p.link)}`;
 		console.group(`fmtnew_goweb: ${p.id}`);
@@ -53,14 +53,14 @@ const fmtnew_goweb = async (p) => {
 		console.groupEnd();
 	}
 
-	const {imgurl, extra} = await preppic(p.img);
+	const { imgurl, extra } = await preppic(p.img);
 
 	const embed = {
 		color: 0xff9500,
 		title: p.title,
 		url: p.link,
 		author: {
-			name: 'goweb.cz',
+			name: 'goweb.cz — nový článek',
 			icon_url: 'https://i.imgur.com/i0sGv6R.png',
 			url: 'https://goweb.cz',
 		},
@@ -97,7 +97,7 @@ const fmt_if_new = (fmt) => async (post) => {
 	return null;
 }
 
-const fmtnew_egf = async (p) => {
+const fmtnew_post_egf = async (p) => {
 	{
 		const txt = `${p.autor} ${bold(optmention(p.autor))} ${fmtnapsal(p.autor)} (${p['updated-nice']}):\n${hyperlink(p.title, p.link)}`;
 		console.group(`fmtnew_egf: ${p.id}`);
@@ -105,14 +105,14 @@ const fmtnew_egf = async (p) => {
 		console.groupEnd();
 	}
 
-	const {imgurl, extra} = await preppic(p.img);
+	const { imgurl, extra } = await preppic(p.img);
 
 	const embed = {
 		color: 0xfcf003,
 		title: p.title,
 		url: p.link,
 		author: {
-			name: 'eurogofed.org',
+			name: 'eurogofed.org — nový článek',
 			icon_url: 'https://i.imgur.com/ZVTlugr.png',
 			url: 'https://eurogofed.org/',
 		},
@@ -141,36 +141,105 @@ const fmtnew_egf = async (p) => {
 	return ret;
 }
 
+const shorten = (s) => {
+	const N = 100;
+	if (s.length < N)
+		return s;
+	return s.slice(0, N - 3) + '...';
+}
+
+const fmtnew_comment_goweb = async (p) => {
+	console.dir(p)
+	/*
+	{
+		const txt = `${p.autor} ${bold(optmention(p.autor))} ${fmtnapsal(p.autor)} (${p['updated-nice']}):\n${hyperlink(p.title, p.link)}`;
+		console.group(`fmtnew_goweb: ${p.id}`);
+		console.log(txt);
+		console.groupEnd();
+	}
+	*/
+
+	const { imgurl, extra } = await preppic(p.avatarpic);
+	//const extra = {};
+
+	const embed = {
+		color: 0x34eb80,
+		title: p.title,
+		url: p.link,
+		///*
+		author: {
+			name: 'goweb.cz — nový komentář',
+			icon_url: 'https://i.imgur.com/i0sGv6R.png',
+			url: 'https://goweb.cz',
+		},
+		// */
+		description: `${optmention(p.autor)} k článku: ${hyperlink(shorten(p.article), p['link'])}
+
+${p['comment']}`,
+		thumbnail: {
+			//url: 'https://i.imgur.com/AfFp7pu.png',
+			url: imgurl,
+		},
+		/*
+		*/
+		fields: [
+			//{ name: 'Autor:', value: ``, inline: true, },
+			//{ name: 'K článku:', value: `${}`, inline: true, },
+			///{ name: 'Inline field title', value: 'Some value here', inline: true, },
+			//{ name: '', value: '', inline: true, },
+		],
+		//image: { url: imgurl, },
+		//timestamp: p['updated'],
+		footer: { text: p['updated-nice'], },
+	};
+	const ret = { embeds: [embed], ...extra };
+	//console.log(JSON.stringify(embed, undefined, 2));
+	return ret;
+}
+
 const sites = {
 	'goweb': {
-		sort: (a) => a.reverse(),
-		fmt_one: fmt_if_new(fmtnew_goweb)
+		comments: {
+			sort: (a) => a.reverse(),
+			fmt_one: fmt_if_new(fmtnew_comment_goweb)
+		},
+		posts: {
+			sort: (a) => a.reverse(),
+			fmt_one: fmt_if_new(fmtnew_post_goweb)
+		}
 	},
 	'egf': {
-		sort: (a) => a.reverse(),
-		fmt_one: fmt_if_new(fmtnew_egf)
+		posts: {
+			sort: (a) => a.reverse(),
+			fmt_one: fmt_if_new(fmtnew_post_egf)
+		}
 	}
 }
 
-export const fmt = async (key, updates) => {
-	const { sort, fmt_one } = sites[key];
-
+export const fmt = async (key, deltas) => {
+	const formatters = sites[key];
 	const msgs = [];
-	for (const p of sort(updates)) {
-		const msg = await fmt_one(p);
-		if (msg != null) {
-			msgs.push(msg);
+	for (const kind of Object.keys(deltas)) {
+		if (formatters[kind] == undefined) continue;
+
+		const { sort, fmt_one } = formatters[kind];
+		const updates = deltas[kind];
+
+		for (const p of sort(updates)) {
+			const msg = await fmt_one(p);
+			if (msg != null) {
+				msgs.push(msg);
+			}
 		}
 	}
-
 	return msgs;
 }
 
 
 async function main() {
-	const key = 'egf';
-	const updates = await check(key);
-	const msgs = await fmt(key, updates)
+	const key = 'goweb';
+	const deltas = await check(key);
+	const msgs = await fmt(key, deltas)
 	for (const msg of msgs) {
 		console.log(JSON.stringify(msg?.embeds, undefined, 2));
 	}

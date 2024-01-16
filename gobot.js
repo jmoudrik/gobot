@@ -45,9 +45,7 @@ const sites = {
 		// every 5 mins
 		interval: 5 * 60 * 1000,
 	},
-	'egf': {
-		interval: 10 * 60 * 1000,
-	}
+	//'egf': { interval: 10 * 60 * 1000, }
 };
 
 const refresh = async (key) => {

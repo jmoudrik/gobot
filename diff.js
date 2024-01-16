@@ -28,7 +28,8 @@ function isOlderThan(date, diff) {
 	const age = new Date() - parsedDate;
 	return age > diff;
 }
-const goweb_diff = async (olds, news, threshold) => {
+
+const goweb_posts_diff = async (olds, news, threshold) => {
 	const ret = [];
 	for (const n of news) {
 		const flags = [];
@@ -38,7 +39,7 @@ const goweb_diff = async (olds, news, threshold) => {
 			if (isOlderThan(n.updated, threshold)) {
 				flags.push('new-but-old');
 			} else {
-				console.log(`diff: new current article: '${n.id}': '${n.title}'`);
+				console.log(`diff: new current thing: '${n.id}': '${n.title}'`);
 				flags.push('new');
 			}
 		} else {
@@ -64,39 +65,57 @@ const goweb_diff = async (olds, news, threshold) => {
 
 const sites = {
 	'goweb': {
-		// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-		threshold: 1 * 24 * 60 * 60 * 1000,
-		memory_file: 'posts_old_goweb.json',
-		diff: goweb_diff,
+		comments: {
+			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
+			threshold: 1.5 * 24 * 60 * 60 * 1000,
+			memory_file: 'comments_old_goweb.json',
+			diff: goweb_posts_diff,
+		},
+		posts: {
+			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
+			threshold: 1 * 24 * 60 * 60 * 1000,
+			memory_file: 'posts_old_goweb.json',
+			diff: goweb_posts_diff,
+		}
 	},
 	'egf': {
-		// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-		threshold: 1 * 24 * 60 * 60 * 1000,
-		memory_file: 'posts_old_egf.json',
-		diff: goweb_diff,
+		posts: {
+			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
+			threshold: 1 * 24 * 60 * 60 * 1000,
+			memory_file: 'posts_old_egf.json',
+			diff: goweb_posts_diff,
+		}
 	}
 }
 
 export async function check(key) {
-	const { threshold, memory_file, diff } = sites[key];
-
+	const site = sites[key];
 	const current = await getCurrent(key);
-	const olds = (await load(memory_file)) ?? [];
-	// what changed?
-	const delta = await diff(olds, current, threshold)
 
-	if (current.length != 0) {
-		console.log(`check ${key}: got ${current.length} posts (of which ${delta.length} new), saving as '${memory_file}'`);
-		save(memory_file, current);
+	const ret = {};
+	for (const kind of ['posts', 'comments']) {
+		if (site[kind] == undefined) continue;
+		const content = current[kind];
+		if (content == undefined) continue;
+		const { threshold, memory_file, diff } = site[kind];
+		const olds = (await load(memory_file)) ?? [];
+		// what changed?
+		const delta = await diff(olds, content, threshold)
+		ret[kind] = delta;
+
+		if (content.length != 0) {
+			console.log(`check ${key}: got ${content.length} ${kind} (of which ${delta.length} new), saving as '${memory_file}'`);
+			save(memory_file, content);
+		}
 	}
-	return delta
+
+	return ret;
 }
 
 
 async function main() {
-	for (const p of await check('egf')) {
-		console.log(JSON.stringify(p, undefined, 2));
-	}
+	const stuff = await check('goweb' )
+	console.log(JSON.stringify(stuff, undefined, 2));
 }
 
 //main();

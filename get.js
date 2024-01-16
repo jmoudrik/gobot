@@ -19,6 +19,24 @@ const parseEgfDate = (dateString) => {
 	return date;
 }
 
+const parse_goweb_cmt_date = (dateString) => {
+	const cleanedDate = dateString.replace(/[.]|v/g, "").trim();
+	const toks = cleanedDate.replace(/ +/g, ' ').split(' ')
+	const [day, month, year, time] = toks;
+	const [hours, minutes] = time.split(':');
+
+	//console.log({dateString, day, month, year, time, hours, minutes, toks});
+
+	const date = new Date(
+		parseInt(year),        // year
+		parseInt(month) - 1,   // month, Index starting from 0 (January is 0, December is 11)
+		parseInt(day),         // day
+		parseInt(hours),       // hours
+		parseInt(minutes)      // minutes
+	);
+	return date;
+}
+
 const sites = {
 	'goweb': {
 		'url': "https://goweb.cz",
@@ -26,6 +44,7 @@ const sites = {
 			const dom = new JSDOM(body);
 			const doc = dom.window.document;
 			const posts = [];
+			const comments = [];
 
 			for (const post of doc.querySelectorAll('article')) {
 				const p = {};
@@ -45,7 +64,26 @@ const sites = {
 				p['comment-link'] = post.querySelector('span.fusion-comments a').href;
 				posts.push(p);
 			}
-			return posts;
+
+			const lis = doc.querySelectorAll('div.decent-comments li')
+
+			for (const li of lis) {
+				const c = {
+					avatarpic: li.querySelector('span.comment-avatar img').src,
+					autor: li.querySelector('span.comment-author').textContent,
+					'updated-nice': li.querySelector('span.comment-date').textContent.trim(),
+					link: li.querySelector('span.comment-link a')?.href,
+					article: li.querySelector('span.comment-link a')?.textContent,
+					comment: li.querySelector('span.comment-excerpt').textContent.trim(),
+				};
+
+				const toks = c.link?.split('#');
+				c['id'] = toks[toks.length - 1];
+				c['updated'] = parse_goweb_cmt_date(c['updated-nice']).toISOString();
+				comments.push(c);
+			}
+
+			return { posts, comments };
 		}
 	},
 	'egf': {
@@ -77,8 +115,8 @@ const sites = {
 				const subdivs = post.querySelectorAll('div');
 				const sline = subdivs[2].textContent.split('|').map((s) => s.trim());
 				const hasAuthor = sline[0].startsWith('By');
-				const authorOffset =  hasAuthor ? 1 : 0;
-				if(hasAuthor){
+				const authorOffset = hasAuthor ? 1 : 0;
+				if (hasAuthor) {
 					p['autor'] = sline[0].replace(/^By/, '').trim();
 				}
 				p['kat'] = sline[authorOffset];
@@ -89,7 +127,7 @@ const sites = {
 
 				posts.push(p);
 			}
-			return posts;
+			return { posts };
 		}
 	}
 };
@@ -106,8 +144,8 @@ async function get(url) {
 }
 
 
-export async function getCurrent(key) {
-	const { url, parse } = sites[key];
+export async function getCurrent(key, overrides = {}) {
+	const { url, parse } = { ...sites[key], ...overrides };
 
 	const body = await get(url);
 	if (body == null) {
@@ -120,8 +158,9 @@ export async function getCurrent(key) {
 
 // use an async main function
 async function main() {
-	const posts = await getCurrent('egf');
-	console.log(JSON.stringify(posts, undefined, 2));
+	const ret = await getCurrent('goweb');
+	const { posts, comments } = ret;
+	console.log(JSON.stringify(comments, undefined, 2));
 }
 
 //main();
