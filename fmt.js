@@ -197,13 +197,16 @@ ${p['comment']}`,
 	return ret;
 }
 
+
 const sites = {
 	'goweb': {
 		comments: {
-			sort: (a) => a.reverse(),
+			//  TODO report slicing
+			sort: (a) => a.slice(0, 2).reverse(),
 			fmt_one: fmt_if_new(fmtnew_comment_goweb)
 		},
 		posts: {
+			// new first on page -> new last to post
 			sort: (a) => a.reverse(),
 			fmt_one: fmt_if_new(fmtnew_post_goweb)
 		}
