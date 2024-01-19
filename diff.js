@@ -72,7 +72,7 @@ const sites = {
 	'goweb': {
 		comments: {
 			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-			threshold: 1.5 * 24 * 60 * 60 * 1000,
+			threshold: 1 * 24 * 60 * 60 * 1000,
 			memory_file: 'comments_old_goweb.json',
 			diff: goweb_posts_diff,
 		},
@@ -94,7 +94,7 @@ const sites = {
 	'omg': {
 		posts: {
 			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-			threshold: 4 * 24 * 60 * 60 * 1000,
+			threshold: 1 * 24 * 60 * 60 * 1000,
 			memory_file: 'posts_old_omg.json',
 			diff: goweb_posts_diff,
 		}
