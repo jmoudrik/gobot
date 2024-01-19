@@ -7,7 +7,7 @@ import { picfetch } from './fetchpic.js';
 const kluci = ['lukan', 'siscurge', 'tomáš grosser'];
 const holky = ['mamutik', 'ada'];
 const discordmap = { 'ondřej kruml': '296387064566644736', 'siscurge': '296387064566644736', 'lukan': '299594384373186560', 'kono': '575820945563058202', 
-'aleš': '463272713587261450'}
+'aleš': '463272713587261450', 'hidoshito':'299595394843803648'}
 
 const getuid = (uname) => {
 	return discordmap[uname.toLowerCase()] ?? null;
