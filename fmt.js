@@ -6,7 +6,8 @@ import { picfetch } from './fetchpic.js';
 
 const kluci = ['lukan', 'siscurge', 'tomáš grosser'];
 const holky = ['mamutik', 'ada'];
-const discordmap = { 'siscurge': '296387064566644736', 'lukan': '299594384373186560' }
+const discordmap = { 'ondřej kruml': '296387064566644736', 'siscurge': '296387064566644736', 'lukan': '299594384373186560', 'kono': '575820945563058202', 
+'aleš': '463272713587261450'}
 
 const getuid = (uname) => {
 	return discordmap[uname.toLowerCase()] ?? null;
@@ -141,11 +142,60 @@ const fmtnew_post_egf = async (p) => {
 	return ret;
 }
 
+const fmtnew_post_omg = async (p) => {
+	{
+		const txt = `${p.autor} ${bold(optmention(p.autor))} ${fmtnapsal(p.autor)} (${p['updated-nice']}):\n${hyperlink(p.title, p.link)}`;
+		console.group(`fmtnew_egf: ${p.id}`);
+		console.log(txt);
+		console.groupEnd();
+	}
+	// just post the bloody link YT embed is nice
+	return `OMG, ${bold(optmention(p.autor))} má nové video!\n` + hyperlink(p.title, p.link);
+
+	// TODO
+	const { imgurl, extra } = await preppic(p.img);
+
+	const embed = {
+		color: 0xff0000,
+		title: p.title,
+		url: p.link,
+		author: {
+			name: 'YouTube — nové OMG video',
+			//icon_url: 'https://i.imgur.com/ZVTlugr.png',
+			//url: 'https://eurogofed.org/',
+		},
+		description: p['txt'],
+		/*
+		thumbnail: {
+			url: 'https://i.imgur.com/AfFp7pu.png',
+		},
+		*/
+		fields: [
+			{ name: 'Autor:', value: `${optmention(p.autor)}`, inline: true, },
+			//{ name: 'Kategorie', value: p['kat'], inline: true, },
+		],
+		//image: { url: imgurl, },
+		timestamp: p['updated'],
+		//footer: { text: p['updated-nice'], },
+	};
+	const ret = { embeds: [embed], ...extra };
+	//console.log(JSON.stringify(embed, undefined, 2));
+	return ret;
+}
+
 const shorten = (s) => {
 	const N = 100;
 	if (s.length < N)
 		return s;
 	return s.slice(0, N - 3) + '...';
+}
+const maybeMiddleOfWord = /[a-zA-Z0-9 _-]$/;
+const maybe_add_ellipsis = (s) => {
+	if(!s || !maybeMiddleOfWord.test(s)){
+		return s;
+	}
+	// if we end in what maybe is middle of word, add ellipsis
+	return s + "...";
 }
 
 const fmtnew_comment_goweb = async (p) => {
@@ -175,7 +225,7 @@ const fmtnew_comment_goweb = async (p) => {
 		// */
 		description: `${optmention(p.autor)} k článku: ${hyperlink(shorten(p.article), p['link'])}
 
-${p['comment']}`,
+${maybe_add_ellipsis(p['comment'])}`,
 		thumbnail: {
 			//url: 'https://i.imgur.com/AfFp7pu.png',
 			url: imgurl,
@@ -216,6 +266,12 @@ const sites = {
 			sort: (a) => a.reverse(),
 			fmt_one: fmt_if_new(fmtnew_post_egf)
 		}
+	},
+	'omg': {
+		posts: {
+			sort: (a) => a.reverse(),
+			fmt_one: fmt_if_new(fmtnew_post_omg)
+		}
 	}
 }
 
@@ -240,11 +296,12 @@ export const fmt = async (key, deltas) => {
 
 
 async function main() {
-	const key = 'goweb';
+	const key = 'omg';
 	const deltas = await check(key);
 	const msgs = await fmt(key, deltas)
 	for (const msg of msgs) {
-		console.log(JSON.stringify(msg?.embeds, undefined, 2));
+		console.log(JSON.stringify(msg, undefined, 2));
+		//console.log(JSON.stringify(msg?.embeds, undefined, 2));
 	}
 }
 

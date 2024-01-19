@@ -129,7 +129,36 @@ const sites = {
 			}
 			return { posts };
 		}
-	}
+	},
+	'omg': {
+		'url': "https://www.youtube.com/feeds/videos.xml?channel_id=UCFKXfTNcD0ezAcOzwwWIv8w",
+		'parse': async (body) => {
+			const dom = new JSDOM(body);
+			const doc = dom.window.document;
+			const posts = [];
+
+			for (const post of doc.querySelectorAll('entry')) {
+				const p = {};
+				p['id'] = post.querySelector('id')?.textContent;
+
+				p['link'] = post.querySelector('link').href;
+				p['title'] = post.querySelector('title')?.textContent;
+
+				p['autor'] = post.querySelector('author name')?.textContent;
+
+				p['updated'] = post.querySelector('published')?.textContent;
+				p['img'] = post.querySelector('media:thumbnail')?.url;
+				p['txt'] = post.querySelector('media:description')?.textContent;
+
+				p['updated-nice'] = p['updated'];
+				//p['comment-count'] = post.querySelector('span.fusion-comments').textContent;
+				//p['comment-link'] = post.querySelector('span.fusion-comments a').href;
+				posts.push(p);
+			}
+
+			return { posts};
+		}
+	},
 };
 
 
@@ -158,9 +187,9 @@ export async function getCurrent(key, overrides = {}) {
 
 // use an async main function
 async function main() {
-	const ret = await getCurrent('goweb');
+	const ret = await getCurrent('omg');
 	const { posts, comments } = ret;
-	console.log(JSON.stringify(comments, undefined, 2));
+	console.log(JSON.stringify(posts, undefined, 2));
 }
 
 //main();

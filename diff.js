@@ -64,6 +64,11 @@ const goweb_posts_diff = async (olds, news, threshold) => {
 
 
 const sites = {
+	// the threshold means
+	// "we publish article (we have not seen already), if it is newer than this"
+	// this is used only for dev purposes,
+	// e.g. "after restart, and memory clean, how many articles do we show"
+	// in prod, we check every 5 min, so anything new is safely within this limit
 	'goweb': {
 		comments: {
 			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
@@ -83,6 +88,14 @@ const sites = {
 			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
 			threshold: 1 * 24 * 60 * 60 * 1000,
 			memory_file: 'posts_old_egf.json',
+			diff: goweb_posts_diff,
+		}
+	},
+	'omg': {
+		posts: {
+			// X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
+			threshold: 4 * 24 * 60 * 60 * 1000,
+			memory_file: 'posts_old_omg.json',
 			diff: goweb_posts_diff,
 		}
 	}
@@ -114,7 +127,7 @@ export async function check(key) {
 
 
 async function main() {
-	const stuff = await check('goweb' )
+	const stuff = await check('omg' )
 	console.log(JSON.stringify(stuff, undefined, 2));
 }
 

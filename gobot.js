@@ -12,7 +12,8 @@ import { check } from './diff.js';
 import { fmt } from './fmt.js';
 
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
-const CHANNEL_ID = process.env.CHANNEL_ID ?? '';
+const DEFAULT_CHANNEL_ID = process.env.CHANNEL_ID ?? '';
+const OMG_CHANNEL_OVERRIDE = process.env.OMG_CHANNEL_OVERRIDE ?? '';
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -45,15 +46,21 @@ const sites = {
 		// every 5 mins
 		interval: 5 * 60 * 1000,
 	},
-	'egf': { interval: 10 * 60 * 1000, }
+	'egf': { interval: 10 * 60 * 1000, },
+	'omg': {
+		interval: 10 * 60 * 1000,
+		channel: OMG_CHANNEL_OVERRIDE,
+	}
 };
 
 const refresh = async (key) => {
 	console.log(`${(new Date()).toString()}: checking ${key}`)
 	const updates = await check(key);
 	const msgs = await fmt(key, updates);
+	const {channel } = sites[key];
 	for (const msg of msgs) {
-		send(CHANNEL_ID, msg).catch(console.error);
+		const sendTo = channel ? channel : DEFAULT_CHANNEL_ID;
+		send(sendTo, msg).catch(console.error);
 	}
 	if(msgs.length == 0){
 		console.log('nop');
