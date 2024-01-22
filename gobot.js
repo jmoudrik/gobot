@@ -13,7 +13,7 @@ import { fmt } from './fmt.js';
 
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
 const DEFAULT_CHANNEL_ID = process.env.CHANNEL_ID ?? '';
-const OMG_CHANNEL_OVERRIDE = process.env.OMG_CHANNEL_OVERRIDE ?? '';
+const CHANNEL_OVERRIDE = JSON.parse(process.env.CHANNEL_OVERRIDE ?? '{}');
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -21,90 +21,91 @@ client.commands = new Collection();
 const send = (chid, msg) => client.channels.cache.get(chid).send(msg);
 
 async function load_cmds() {
-	const foldersPath = path.join(__dirname, 'commands');
-	const commandFolders = fs.readdirSync(foldersPath);
+    const foldersPath = path.join(__dirname, 'commands');
+    const commandFolders = fs.readdirSync(foldersPath);
 
-	for (const folder of commandFolders) {
-		const commandsPath = path.join(foldersPath, folder);
-		const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-		for (const file of commandFiles) {
-			const filePath = path.join(commandsPath, file);
-			const command = await import(filePath);
+    for (const folder of commandFolders) {
+        const commandsPath = path.join(foldersPath, folder);
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        for (const file of commandFiles) {
+            const filePath = path.join(commandsPath, file);
+            const command = await import(filePath);
 
-			if ('data' in command && 'execute' in command) {
-				console.log("new command " + command.data.name);
-				client.commands.set(command.data.name, command);
-			} else {
-				console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-			}
-		}
-	}
+            if ('data' in command && 'execute' in command) {
+                console.log("new command " + command.data.name);
+                client.commands.set(command.data.name, command);
+            } else {
+                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+            }
+        }
+    }
 }
 
 const sites = {
-	'goweb': {
-		// every 5 mins
-		interval: 5 * 60 * 1000,
-	},
-	'egf': { interval: 10 * 60 * 1000, },
-	'omg': {
-		interval: 10 * 60 * 1000,
-		channel: OMG_CHANNEL_OVERRIDE,
-	}
+    'goweb': {
+        // every 5 mins
+        interval: 5 * 60 * 1000,
+    },
+    'egf': {
+        interval: 10 * 60 * 1000,
+    },
+    'omg': {
+        interval: 10 * 60 * 1000,
+    }
 };
 
 const refresh = async (key) => {
-	console.log(`${(new Date()).toString()}: checking ${key}`)
-	const updates = await check(key);
-	const msgs = await fmt(key, updates);
-	const {channel } = sites[key];
-	for (const msg of msgs) {
-		const sendTo = channel ? channel : DEFAULT_CHANNEL_ID;
-		send(sendTo, msg).catch(console.error);
-	}
-	if(msgs.length == 0){
-		console.log('nop');
-	}
-	return msgs.length > 0;
+    console.log(`${(new Date()).toString()}: checking ${key}`)
+    const updates = await check(key);
+    const msgs = await fmt(key, updates);
+    const channel = CHANNEL_OVERRIDE[key];
+    for (const msg of msgs) {
+        const sendTo = channel ? channel : DEFAULT_CHANNEL_ID;
+        send(sendTo, msg).catch(console.error);
+    }
+    if (msgs.length == 0) {
+        console.log('nop');
+    }
+    return msgs.length > 0;
 }
 
 client.once(Events.ClientReady, readyClient => {
-	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-	for (const key of Object.keys(sites)) {
-		const { interval } = sites[key];
-		refresh(key);
-		setInterval(() => refresh(key), interval);
-	}
+    console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+    for (const key of Object.keys(sites)) {
+        const { interval } = sites[key];
+        refresh(key);
+        setInterval(() => refresh(key), interval);
+    }
 });
 
 client.on(Events.MessageCreate, async interaction => {
-	console.dir(interaction);
+    console.dir(interaction);
 })
 
 client.on(Events.InteractionCreate, async interaction => {
-	//console.dir(interaction);
-	console.log({ user: interaction.user, commandName: interaction.commandName });
-	if (!interaction.isChatInputCommand()) return;
+    //console.dir(interaction);
+    console.log({ user: interaction.user, commandName: interaction.commandName });
+    if (!interaction.isChatInputCommand()) return;
 
-	const command = interaction.client.commands.get(interaction.commandName);
+    const command = interaction.client.commands.get(interaction.commandName);
 
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-	}
+    if (!command) {
+        console.error(`No command matching ${interaction.commandName} was found.`);
+        return;
+    }
 
-	try {
-		await command.execute(interaction);
-	} catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-		}
-	}
+    try {
+        await command.execute(interaction);
+    } catch (error) {
+        console.error(error);
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+        } else {
+            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        }
+    }
 });
 
 load_cmds().then(() => {
-	client.login(AUTH_TOKEN);
+    client.login(AUTH_TOKEN);
 });
