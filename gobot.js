@@ -42,17 +42,18 @@ async function load_cmds() {
         }
     }
 }
+const oneMin = 60 * 1000;
 
 const sites = {
     'goweb': {
         // every 5 mins
-        interval: 5 * 60 * 1000,
+        interval: 5 * oneMin,
     },
     'egf': {
-        interval: 10 * 60 * 1000,
+        interval: 10 * oneMin,
     },
     'omg': {
-        interval: 10 * 60 * 1000,
+        interval: 1 * oneMin,
     }
 };
 
