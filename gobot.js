@@ -15,7 +15,7 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
 const DEFAULT_CHANNEL_ID = process.env.CHANNEL_ID ?? '';
 const CHANNEL_OVERRIDE = JSON.parse(process.env.CHANNEL_OVERRIDE ?? '{}');
 
-console.log({CHANNEL_OVERRIDE});
+console.log({ CHANNEL_OVERRIDE });
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -60,10 +60,9 @@ const refresh = async (key) => {
     console.log(`${(new Date()).toString()}: checking ${key}`)
     const updates = await check(key);
     const msgs = await fmt(key, updates);
-    const channel = CHANNEL_OVERRIDE[key];
-    for (const msg of msgs) {
-        const sendTo = channel ? channel : DEFAULT_CHANNEL_ID;
-        send(sendTo, msg).catch(console.error);
+    for (const { msg, kind } of msgs) {
+        const channel = (CHANNEL_OVERRIDE[key] ?? {})[kind] ?? DEFAULT_CHANNEL_ID;
+        send(channel, msg).catch(console.error);
     }
     if (msgs.length == 0) {
         console.log('nop');

@@ -283,11 +283,12 @@ export const fmt = async (key, deltas) => {
 
 		const { sort, fmt_one } = formatters[kind];
 		const updates = deltas[kind];
+		console.log(`fmt got ${updates.length}`);
 
 		for (const p of sort(updates)) {
 			const msg = await fmt_one(p);
 			if (msg != null) {
-				msgs.push(msg);
+				msgs.push({msg, kind});
 			}
 		}
 	}
