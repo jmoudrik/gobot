@@ -15,6 +15,8 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
 const DEFAULT_CHANNEL_ID = process.env.CHANNEL_ID ?? '';
 const CHANNEL_OVERRIDE = JSON.parse(process.env.CHANNEL_OVERRIDE ?? '{}');
 
+console.log({CHANNEL_OVERRIDE});
+
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
