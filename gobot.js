@@ -46,8 +46,7 @@ const oneMin = 60 * 1000;
 
 const sites = {
     'goweb': {
-        // every 5 mins
-        interval: 5 * oneMin,
+        interval: 1 * oneMin,
     },
     'egf': {
         interval: 10 * oneMin,
