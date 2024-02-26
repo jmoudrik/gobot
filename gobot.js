@@ -29,6 +29,15 @@ global.counter = {};
 // key ~ goweb, kind ~ posts
 const route = (key, kind) => (CHANNEL_OVERRIDE[key] ?? {})[kind] ?? DEFAULT_CHANNEL_ID;
 
+for (const [key, kind] in [
+    ['goweb', 'posts'],
+    ['goweb', 'comments'],
+    ['omg', 'posts'],
+    ['egf', 'posts'],
+]) {
+    console.log(`route test: will route '${key}' '${kind}' to '${route(key, kind)}'`);
+}
+
 const incrementCounter = (key, kind) => {
     const k = `${key}-${kind}`;
     global.counter[k] = (global.counter[k] ?? 0) + 1;
