@@ -10,12 +10,13 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
-const CHANNEL_ID = process.env.CHANNEL_ID ?? '';
 // server
 const GUILD_ID = process.env.GUILD_ID ?? '';
 const APP_ID = process.env.APP_ID ?? '';
 
-console.log({ AUTH_TOKEN, CHANNEL_ID, GUILD_ID })
+console.log("gobot start");
+console.log((new Date()).toString());
+console.log({ AUTH_TOKEN, GUILD_ID });
 
 const getCmds = async () => {
 	const commands = [];
@@ -38,9 +39,9 @@ const getCmds = async () => {
 			}
 		}
 	}
-
 	return commands;
 }
+
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(AUTH_TOKEN);
 

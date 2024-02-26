@@ -12,10 +12,29 @@ import { check } from './diff.js';
 import { fmt } from './fmt.js';
 
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
-const DEFAULT_CHANNEL_ID = process.env.CHANNEL_ID ?? '';
+const DEFAULT_CHANNEL_ID = process.env.DEFAULT_CHANNEL_ID ?? '';
 const CHANNEL_OVERRIDE = JSON.parse(process.env.CHANNEL_OVERRIDE ?? '{}');
 
-console.log({ CHANNEL_OVERRIDE });
+console.log({ AUTH_TOKEN, DEFAULT_CHANNEL_ID, CHANNEL_OVERRIDE });
+
+if (!DEFAULT_CHANNEL_ID) {
+    throw Error("no default channel id, bad config")
+}
+if (!AUTH_TOKEN) {
+    throw Error("no token")
+}
+
+global.counter = {};
+
+// key ~ goweb, kind ~ posts
+const route = (key, kind) => (CHANNEL_OVERRIDE[key] ?? {})[kind] ?? DEFAULT_CHANNEL_ID;
+
+const incrementCounter = (key, kind) => {
+    const k = `${key}-${kind}`;
+    global.counter[k] = (global.counter[k] ?? 0) + 1;
+}
+
+incrementCounter("counter", "test");
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -61,8 +80,9 @@ const refresh = async (key) => {
     const updates = await check(key);
     const msgs = await fmt(key, updates);
     for (const { msg, kind } of msgs) {
-        const channel = (CHANNEL_OVERRIDE[key] ?? {})[kind] ?? DEFAULT_CHANNEL_ID;
+        const channel = route(key, kind);
         send(channel, msg).catch(console.error);
+        incrementCounter(key, kind);
     }
     if (msgs.length == 0) {
         console.log('nop');
