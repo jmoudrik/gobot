@@ -200,7 +200,7 @@ const maybe_add_ellipsis = (s) => {
 }
 
 const space2hyphen = (s) => {
-    return s.replaceAll(/ /g, '-').replaceAll(/-+/g, '-')
+    return s.trim().replaceAll(/ /g, '-').replaceAll(/-+/g, '-')
 }
 
 const fmtnew_comment_goweb = async (p) => {
@@ -214,7 +214,7 @@ const fmtnew_comment_goweb = async (p) => {
     }
     */
     //const pname = space2hyphen((p.autor + "-" + shorten(`${p['comment']}`, 20, false)).trim());
-    const pname = p.autor + '_avatar.jpg';
+    const pname = space2hyphen(p.autor) + '.jpg';
 
     const { imgurl, extra } = await preppic(p.avatarpic, pname);
     console.log({ imgurl });
