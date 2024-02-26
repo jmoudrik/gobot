@@ -29,7 +29,7 @@ global.counter = {};
 // key ~ goweb, kind ~ posts
 const route = (key, kind) => (CHANNEL_OVERRIDE[key] ?? {})[kind] ?? DEFAULT_CHANNEL_ID;
 
-for (const [key, kind] in [
+for (const [key, kind] of [
     ['goweb', 'posts'],
     ['goweb', 'comments'],
     ['omg', 'posts'],
