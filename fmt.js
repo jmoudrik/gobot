@@ -214,7 +214,7 @@ const fmtnew_comment_goweb = async (p) => {
     }
     */
     //const pname = space2hyphen((p.autor + "-" + shorten(`${p['comment']}`, 20, false)).trim());
-    const pname = p.autor + '_avatar';
+    const pname = p.autor + '_avatar.jpg';
 
     const { imgurl, extra } = await preppic(p.avatarpic, pname);
     console.log({ imgurl });
