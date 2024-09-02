@@ -132,24 +132,24 @@ const rule_match_rex = (rex) => {
 };
 
 const report_stuffs = {
-    'threads-10min': {
-		disabled:false,
-        listInterval: 10 * ONE_MIN_MS,
-        label: "Vlákna aktivní během posledních 10min:\n",
-        refresh_rule: rule_match_rex(MIN10_REX),
-        // not more frequently than
-        minDelta: 5 * ONE_MIN_MS,
-		route_name: ['threads', 'hourly']
-    },
-//    'threads-hourly': {
-//		disabled: true,
-//        listInterval: 60 * ONE_MIN_MS,
-//        label: "Vlákna aktivní během poslední hodiny:\n",
-//        refresh_rule: rule_match_rex(HOUR_REX),
+//    'threads-10min': {
+//		disabled:false,
+//        listInterval: 10 * ONE_MIN_MS,
+//        label: "Vlákna aktivní během posledních 10min:\n",
+//        refresh_rule: rule_match_rex(MIN10_REX),
 //        // not more frequently than
-//        minDelta: 30 * ONE_MIN_MS,
+//        minDelta: 5 * ONE_MIN_MS,
 //		route_name: ['threads', 'hourly']
 //    },
+    'threads-hourly': {
+		disabled: false,
+        listInterval: 60 * ONE_MIN_MS,
+        label: "Vlákna aktivní během poslední hodiny:\n",
+        refresh_rule: rule_match_rex(HOUR_REX),
+        // not more frequently than
+        minDelta: 30 * ONE_MIN_MS,
+		route_name: ['threads', 'hourly']
+    },
 };
 
 export const setup_periodical_report = (send_fun, incrementCounter) => {
