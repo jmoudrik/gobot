@@ -103,15 +103,14 @@ const report = async (key, listSince, send_fun, incrementCounter, label, send_to
             output_rows.push(`- ${header}: ${summary}`);
         }
     }
-    console.log("channel changes since", ms_ts_to_iso(sinceTimeList));
     if (output_rows.length > 0) {
-        send_fun(send_to_channel, label + output_rows.join('\n'));
+		const msg = label + output_rows.join('\n');
+    	console.log("sending ", msg.length, " since ",  ms_ts_to_iso(sinceTimeList));
+        send_fun(send_to_channel, msg);
     }
     for (const row of output_rows) {
         console.log(row);
     }
-    console.log();
-    console.log();
     console.log();
 	return true;
 }
@@ -142,15 +141,15 @@ const report_stuffs = {
         minDelta: 5 * ONE_MIN_MS,
 		route_name: ['threads', 'hourly']
     },
-    'threads-hourly': {
-		disabled: true,
-        listInterval: 60 * ONE_MIN_MS,
-        label: "Vlákna aktivní během poslední hodiny:\n",
-        refresh_rule: rule_match_rex(HOUR_REX),
-        // not more frequently than
-        minDelta: 30 * ONE_MIN_MS,
-		route_name: ['threads', 'hourly']
-    },
+//    'threads-hourly': {
+//		disabled: true,
+//        listInterval: 60 * ONE_MIN_MS,
+//        label: "Vlákna aktivní během poslední hodiny:\n",
+//        refresh_rule: rule_match_rex(HOUR_REX),
+//        // not more frequently than
+//        minDelta: 30 * ONE_MIN_MS,
+//		route_name: ['threads', 'hourly']
+//    },
 };
 
 export const setup_periodical_report = (send_fun, incrementCounter) => {
@@ -159,7 +158,8 @@ export const setup_periodical_report = (send_fun, incrementCounter) => {
     setInterval(async () => {
         for (const key of Object.keys(report_stuffs)) {
             const { disabled, minDelta, refresh_rule, listInterval, label, route_name} = report_stuffs[key];
-			if(disabled) {
+			if(disabled == true) {
+				console.log("disabled", key);
 				continue;
 			}
 			const [rk, rv] = route_name;
