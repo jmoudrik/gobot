@@ -50,7 +50,7 @@ export async function load_dir(dir, callback) {
 const cid2path = (channelid) => path.join(__dirname, 'db', `${channelid}.json`);
 
 export const push_thread_row = async (channelid, data) => {
-    console.log("PUSH", data);
+    console.log("PUSH channel=",channelid, " event=", data.event ?? "no event");
     const filePath = cid2path(channelid);
     const jsonData = JSON.stringify(data);
     await fs.promises.appendFile(filePath, jsonData + '\n');
