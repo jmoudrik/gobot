@@ -123,17 +123,30 @@ const FIVE_SEC_MS = 5 * 1000;
 const TIMER_RESOLUTION_MS = 10 * 1000;
 
 const HOUR_REX = /T\d{2}:00:/
+const MIN10_REX = /T\d{2}:\d0:/
 
-const rule_match_every_whole_hour = () => {
-    const now = new Date();
-    return HOUR_REX.test(now.toISOString());
+const rule_match_rex = (rex) => {
+	return () => {
+		const now = new Date();
+		return rex.test(now.toISOString());
+	}
 };
 
 const report_stuffs = {
+    'threads-10min': {
+		disabled:false,
+        listInterval: 10 * ONE_MIN_MS,
+        label: "Vlákna aktivní během posledních 10min:\n",
+        refresh_rule: rule_match_rex(MIN10_REX),
+        // not more frequently than
+        minDelta: 5 * ONE_MIN_MS,
+		route_name: ['threads', 'hourly']
+    },
     'threads-hourly': {
+		disabled: true,
         listInterval: 60 * ONE_MIN_MS,
         label: "Vlákna aktivní během poslední hodiny:\n",
-        refresh_rule: rule_match_every_whole_hour,
+        refresh_rule: rule_match_rex(HOUR_REX),
         // not more frequently than
         minDelta: 30 * ONE_MIN_MS,
 		route_name: ['threads', 'hourly']
@@ -145,7 +158,10 @@ export const setup_periodical_report = (send_fun, incrementCounter) => {
 
     setInterval(async () => {
         for (const key of Object.keys(report_stuffs)) {
-            const { minDelta, refresh_rule, listInterval, label, route_name} = report_stuffs[key];
+            const { disabled, minDelta, refresh_rule, listInterval, label, route_name} = report_stuffs[key];
+			if(disabled) {
+				continue;
+			}
 			const [rk, rv] = route_name;
 			const send_to = route(rk, rv);
 
