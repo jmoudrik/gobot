@@ -1,116 +1,57 @@
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-import * as fs from 'fs';
-
 import { Client, Events, GatewayIntentBits, Collection } from 'discord.js';
 
-import { check } from './diff.js';
-import { fmt } from './fmt.js';
+import { setup_periodical_refresh } from './gobot_posts.js';
+import { setup_periodical_report } from './gobot_threads.js';
+import { load_dir } from './misc.js';
 
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? '';
-const DEFAULT_CHANNEL_ID = process.env.DEFAULT_CHANNEL_ID ?? '';
-const CHANNEL_OVERRIDE = JSON.parse(process.env.CHANNEL_OVERRIDE ?? '{}');
-
-console.log({ AUTH_TOKEN, DEFAULT_CHANNEL_ID, CHANNEL_OVERRIDE });
-
-if (!DEFAULT_CHANNEL_ID) {
-    throw Error("no default channel id, bad config")
-}
 if (!AUTH_TOKEN) {
     throw Error("no token")
 }
+//console.log({ AUTH_TOKEN});
 
 global.counter = {};
-
-// key ~ goweb, kind ~ posts
-const route = (key, kind) => (CHANNEL_OVERRIDE[key] ?? {})[kind] ?? DEFAULT_CHANNEL_ID;
-
-for (const [key, kind] of [
-    ['goweb', 'posts'],
-    ['goweb', 'comments'],
-    ['omg', 'posts'],
-    ['egf', 'posts'],
-]) {
-    console.log(`route test: will route '${key}' '${kind}' to '${route(key, kind)}'`);
-}
-
 const incrementCounter = (key, kind) => {
     const k = `${key}-${kind}`;
     global.counter[k] = (global.counter[k] ?? 0) + 1;
 }
-
 incrementCounter("counter", "test");
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 client.commands = new Collection();
 const send = (chid, msg) => client.channels.cache.get(chid).send(msg);
 
 async function load_cmds() {
-    const foldersPath = path.join(__dirname, 'commands');
-    const commandFolders = fs.readdirSync(foldersPath);
-
-    for (const folder of commandFolders) {
-        const commandsPath = path.join(foldersPath, folder);
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-        for (const file of commandFiles) {
-            const filePath = path.join(commandsPath, file);
-            const command = await import(filePath);
-
-            if ('data' in command && 'execute' in command) {
-                console.log("new command " + command.data.name);
-                client.commands.set(command.data.name, command);
-            } else {
-                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-            }
+	await load_dir('commands', (command, filePath) => {
+        if ('data' in command && 'execute' in command) {
+            console.log("registering command " + command.data.name);
+            client.commands.set(command.data.name, command);
+        } else {
+            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
         }
-    }
+    });
 }
-const oneMin = 60 * 1000;
 
-const sites = {
-    'goweb': {
-        interval: 1 * oneMin,
-    },
-    'egf': {
-        interval: 10 * oneMin,
-    },
-    'omg': {
-        interval: 1 * oneMin,
-    }
-};
-
-const refresh = async (key) => {
-    console.log(`${(new Date()).toString()}: checking ${key}`)
-    const updates = await check(key);
-    const msgs = await fmt(key, updates);
-    for (const { msg, kind } of msgs) {
-        const channel = route(key, kind);
-        send(channel, msg).catch(console.error);
-        incrementCounter(key, kind);
-    }
-    if (msgs.length == 0) {
-        console.log('nop');
-    }
-    return msgs.length > 0;
+async function load_events() {
+    await load_dir('events', (event, filePath) => {
+        console.log("registering event handler " + event.data.name);
+        if (event.data.once) {
+            client.once(event.data.name, async (...args) => await event.data.execute(...args));
+        } else {
+            client.on(event.data.name, async (...args) => await event.data.execute(...args));
+        }
+    });
 }
 
 client.once(Events.ClientReady, readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-    for (const key of Object.keys(sites)) {
-        const { interval } = sites[key];
-        refresh(key);
-        setInterval(() => refresh(key), interval);
-    }
+    setup_periodical_refresh(send, incrementCounter);
+    setup_periodical_report(send, incrementCounter);
 });
 
-client.on(Events.MessageCreate, async interaction => {
-    console.dir(interaction);
-})
+//client.on(Events.MessageCreate, async interaction => { console.dir(interaction); })
+//client.on(Events.ThreadCreate, async interaction => { console.log("ThreadCreate"); console.dir(interaction); })
 
 client.on(Events.InteractionCreate, async interaction => {
     //console.dir(interaction);
@@ -137,5 +78,10 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 load_cmds().then(() => {
+    load_events()
+}).then(() => {
     client.login(AUTH_TOKEN);
+}).then(() => {
+    console.log('logged in');
 });
+

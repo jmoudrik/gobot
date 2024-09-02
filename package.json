@@ -10,6 +10,7 @@
   "author": "jm",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.1",
     "discord.js": "^14.14.1",
     "jsdom": "^23.2.0",
     "node-fetch": "^3.3.2",

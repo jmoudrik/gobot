@@ -1,3 +1,4 @@
+db/
 posts_old.json
 lock.pid
 LOG
