@@ -21,6 +21,7 @@ for (const [key, kind] of [
     ['omg', 'posts'],
     ['egf', 'posts'],
     ['threads', 'hourly'],
+    ['threads', 'daily'],
     ['threads', 'weekly'],
 ]) {
     console.log(`route test: will route '${key}' '${kind}' to '${route(key, kind)}'`);

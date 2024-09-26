@@ -1,6 +1,49 @@
 import { list_recent_channels, read_thread_rows, route } from './misc.js';
 import { ask_llm, sanitize } from './claude_summarizer.js';
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ONE_MIN_MS = 60 * 1000;
+const FIVE_SEC_MS = 5 * 1000;
+const TIMER_RESOLUTION_MS = 10 * 1000;
+
+const HOUR_REX = /T\d{2}:00:/;
+const MIN10_REX = /T\d{2}:\d0:/;
+// this is ISO so afaik prague is +2h
+const EVERY_MORNING_REX = /T05:30/;
+//const EVERY_MORNING_REX = /T08:44:/;
+
+const rule_match_rex = (rex) => {
+	return () => {
+		const now = new Date();
+		const dt = now.toISOString()
+		//console.log("rule_match_rex", {rex, dt});
+
+		return rex.test(dt);
+	}
+};
+
+
+const report_stuffs = {
+//    'threads-10min': {
+//		disabled:false,
+//        listInterval: 10 * ONE_MIN_MS,
+//        label: "Vlákna aktivní během posledních 10min:\n",
+//        refresh_rule: rule_match_rex(MIN10_REX),
+//        // not more frequently than
+//        minDelta: 5 * ONE_MIN_MS,
+//		route_name: ['threads', 'hourly']
+//    },
+    'threads-daily': {
+		disabled: false,
+        listInterval: ONE_DAY_MS,
+        label: "Vlákna aktivní za posledních 24h:\n",
+        refresh_rule: rule_match_rex(EVERY_MORNING_REX),
+        // not more frequently than
+        minDelta: ONE_DAY_MS - 30 * ONE_MIN_MS,
+		route_name: ['threads', 'daily']
+    },
+};
+
 // row from messageCreate.js
 // const row = {authorId, channelType, channelName, channelId, content, id, createdTimestamp};
 //
@@ -116,42 +159,6 @@ const report = async (key, listSince, send_fun, incrementCounter, label, send_to
 }
 
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const ONE_MIN_MS = 60 * 1000;
-const FIVE_SEC_MS = 5 * 1000;
-const TIMER_RESOLUTION_MS = 10 * 1000;
-
-const HOUR_REX = /T\d{2}:00:/
-const MIN10_REX = /T\d{2}:\d0:/
-
-const rule_match_rex = (rex) => {
-	return () => {
-		const now = new Date();
-		return rex.test(now.toISOString());
-	}
-};
-
-const report_stuffs = {
-//    'threads-10min': {
-//		disabled:false,
-//        listInterval: 10 * ONE_MIN_MS,
-//        label: "Vlákna aktivní během posledních 10min:\n",
-//        refresh_rule: rule_match_rex(MIN10_REX),
-//        // not more frequently than
-//        minDelta: 5 * ONE_MIN_MS,
-//		route_name: ['threads', 'hourly']
-//    },
-    'threads-hourly': {
-		disabled: false,
-        listInterval: 60 * ONE_MIN_MS,
-        label: "Vlákna aktivní během poslední hodiny:\n",
-        refresh_rule: rule_match_rex(HOUR_REX),
-        // not more frequently than
-        minDelta: 30 * ONE_MIN_MS,
-		route_name: ['threads', 'hourly']
-    },
-};
-
 export const setup_periodical_report = (send_fun, incrementCounter) => {
     const last = {};
 
@@ -168,7 +175,9 @@ export const setup_periodical_report = (send_fun, incrementCounter) => {
             const lt = last[key] ?? 0;
             const now = new Date();
             const delta = now - lt;
-            if (delta >= minDelta && refresh_rule()) {
+			const shouldrefresh = refresh_rule();
+			//console.log("tick",{key, delta, minDelta, shouldrefresh});
+            if (delta >= minDelta && shouldrefresh) {
 				
 				try{
                 	const ret = await report(key, listInterval, send_fun, incrementCounter, label, send_to);

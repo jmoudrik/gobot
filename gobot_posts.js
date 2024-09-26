@@ -17,7 +17,7 @@ const sites = {
     }
 };
 
-const refresh = async (key, send_fun) => {
+const refresh = async (key, send_fun, incrementCounter) => {
     console.log(`${(new Date()).toString()}: checking ${key}`)
     const updates = await check(key);
     const msgs = await fmt(key, updates);
