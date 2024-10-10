@@ -4,19 +4,22 @@ import { ask_llm, sanitize } from './claude_summarizer.js';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const ONE_MIN_MS = 60 * 1000;
 const FIVE_SEC_MS = 5 * 1000;
-const TIMER_RESOLUTION_MS = 10 * 1000;
+
+// must be longer than how long does the await report take
+const TIMER_RESOLUTION_MS = 4 * 60 * 1000;
+//const TIMER_RESOLUTION_MS = 5 * 1000;
 
 const HOUR_REX = /T\d{2}:00:/;
 const MIN10_REX = /T\d{2}:\d0:/;
 // this is ISO so afaik prague is +2h
-const EVERY_MORNING_REX = /T05:30/;
-//const EVERY_MORNING_REX = /T08:44:/;
+const EVERY_MORNING_REX = /T05:3[0-9]/;
+//const EVERY_MORNING_REX = /T14:31:/;
 
 const rule_match_rex = (rex) => {
 	return () => {
 		const now = new Date();
 		const dt = now.toISOString()
-		//console.log("rule_match_rex", {rex, dt});
+		console.log("rule_match_rex", {rex, dt});
 
 		return rex.test(dt);
 	}
@@ -75,10 +78,18 @@ const ms_ts_to_iso = (ms) => {
 
 const MAX_CONTEXT_MSGS = 100;
 
-const report = async (key, listSince, send_fun, incrementCounter, label, send_to_channel) => {
+let RUNNING = false;
 
+const report = async (key, listSince, send_fun, incrementCounter, label, send_to_channel) => {
     const sinceTimeList = Date.now() - listSince;
     console.log(`${(new Date()).toISOString()}: reporting ${key}, listSince ${listSince}\t(${ms_ts_to_iso(sinceTimeList)})`);
+
+	if(RUNNING){
+		console.log("already running");
+		return false;
+	}
+	RUNNING = true;
+
     const tids = await list_recent_channels(sinceTimeList);
     //console.log({ tids });
 
@@ -109,6 +120,7 @@ const report = async (key, listSince, send_fun, incrementCounter, label, send_to
                 if (row.content) {
                     agg.messages.push({
                         authorid: row.authorId,
+                        displayName: row.displayName,
                         content: row.content
                     });
                     agg.authors.add(row.authorId);
@@ -128,8 +140,9 @@ const report = async (key, listSince, send_fun, incrementCounter, label, send_to
         }
         const texts = [];
         const msgs_ctx = messages.slice(Math.max(0, messages.length - MAX_CONTEXT_MSGS), messages.length - 1);
-        for (const { authorid, content } of msgs_ctx) {
-            texts.push(`<p><user>${authorid}</user>: ${sanitize(content)}</p>`);
+        for (const { authorid, content, displayName } of msgs_ctx) {
+			//texts.push(`<p><user>${authorid}</user>: ${sanitize(content)}</p>`);
+            texts.push(`<p><user>${displayName}</user>: ${sanitize(content)}</p>`);
         }
         const head = `<id>${channelId}</id>${sanitize(name)}`;
         const body = texts.join('\n');
@@ -186,6 +199,8 @@ export const setup_periodical_report = (send_fun, incrementCounter) => {
 					}
 				}catch(e){
 					console.log(e);
+				}finally{
+					RUNNING = false;
 				}
             }
         }

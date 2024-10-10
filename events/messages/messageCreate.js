@@ -8,12 +8,12 @@ export const data = {
     async execute(msg) {
         const { channel, channelId, content, id, author, createdTimestamp } = msg;
         const { type: channelType, name: channelName } = channel ?? {};
-        const { id: authorId } = author ?? {};
+        const { id: authorId, displayName } = author ?? {};
 
-        console.log(`messageCreate: ${author} -> ${channel}: "${content}"`);
+        console.log(`messageCreate: ${author} ${displayName} -> ${channel}: "${content}"`);
         if (channelType == 11) {
             const row = {
-                authorId, channelType, channelName, channelId, content, id, createdTimestamp,
+                authorId, channelType, channelName, channelId, content, id, createdTimestamp, displayName,
                 event: 'messageCreate'
             };
             await push_thread_row(channelId, row);
