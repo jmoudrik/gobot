@@ -8,17 +8,22 @@ export const data = {
     async execute(msg) {
         const { channel, channelId, content, id, author, member, createdTimestamp } = msg;
         const { type: channelType, name: channelName } = channel ?? {};
-        const { id: authorId, displayName, username } = author ?? {};
-        const { displayName: md, nickname : mn} = member ?? {};
+        const { id: authorId, displayName, username, globalName } = author ?? {};
+        const { displayName: md, nickname: mn } = member ?? {};
 
-        console.log(`messageCreate: ${author} ${displayName} ${username} -> ${channel}: "${content}"`);
+        const row = {
+            authorId, channelType, channelName, channelId, content, id, createdTimestamp,
+            displayName: md ?? mn ?? displayName,
+            displayNameAuthor: displayName,
+            displayNameMember: md,
+            nicknameMember: mn,
+            globalName,
+            username,
+            event: 'messageCreate'
+        };
+        const subset = { displayNameAuthor, displayNameMember, globalName, nicknameMember } = row;
+        console.log(`messageCreate: ${subset} -> ${channelName}: "${content}"`);
         if (channelType == 11) {
-            const row = {
-                authorId, channelType, channelName, channelId, content, id, createdTimestamp,
-				displayName: md ?? mn ?? displayName,
-				username,
-                event: 'messageCreate'
-            };
             await push_thread_row(channelId, row);
         }
     }
