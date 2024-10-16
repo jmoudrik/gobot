@@ -24,7 +24,7 @@ export const data = {
 		{
 			const  { displayNameAuthor, displayNameMember, globalName, nicknameMember } = row;
 			const subset = { displayNameAuthor, displayNameMember, globalName, nicknameMember };
-			console.log(`messageCreate: ${subset} -> ${channelName}: "${content}"`);
+			console.log(`messageCreate: ${JSON.stringify(subset)} -> ${channelName}: "${content}"`);
 		}
         if (channelType == 11) {
             await push_thread_row(channelId, row);
