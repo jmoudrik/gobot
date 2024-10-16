@@ -23,7 +23,7 @@ export const data = {
         };
 		{
 			const  { displayNameAuthor, displayNameMember, globalName, nicknameMember } = row;
-			const subset = { displayNameAuthor, displayNameMember, globalName, nicknameMember };
+			const subset = { username, displayNameAuthor, displayNameMember, globalName, nicknameMember };
 			console.log(`messageCreate: ${JSON.stringify(subset)} -> ${channelName}: "${content}"`);
 		}
         if (channelType == 11) {
