@@ -141,9 +141,9 @@ const report = async (key, listSince, send_fun, incrementCounter, label, send_to
         }
         const texts = [];
         const msgs_ctx = messages.slice(Math.max(0, messages.length - MAX_CONTEXT_MSGS), messages.length - 1);
-        for (const { authorid, content, displayName, username } of msgs_ctx) {
+        for (const { authorid, content, displayName} of msgs_ctx) {
 			//texts.push(`<p><user>${authorid}</user>: ${sanitize(content)}</p>`);
-            texts.push(`<p><user>${username ?? displayName}</user>: ${sanitize(content)}</p>`);
+            texts.push(`<p><user>${displayName ?? authorid}</user>: ${sanitize(content)}</p>`);
         }
         const head = `<id>${channelId}</id>${sanitize(name)}`;
         const body = texts.join('\n');

@@ -13,7 +13,7 @@ export const data = {
 
         const row = {
             authorId, channelType, channelName, channelId, content, id, createdTimestamp,
-            displayName: md ?? mn ?? displayName,
+            displayName: mn ?? md ?? displayName ?? username ?? globalName,
             displayNameAuthor: displayName,
             displayNameMember: md,
             nicknameMember: mn,
