@@ -214,17 +214,43 @@ const sites = {
     },
 };
 
+// Common User-Agents for web browsers
+const USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+];
 
-async function get(url, payload) {
-    const ret = await fetch(url, payload);
-    //console.log(ret.status)
-    if (ret.status != 200) {
+async function get(url, payload = {}) {
+    // Merge default options with provided payload
+    const options = {
+        ...payload,
+        headers: {
+            ...payload.headers,
+            'User-Agent': USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
+        },
+        // AbortSignal with timeout
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+    };
+
+    try {
+        const ret = await fetch(url, options);
+        if (ret.status !== 200) {
+            return null;
+        }
+        const body = await ret.text();
+        return body;
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.error(`Request timeout for ${url}`);
+        } else {
+            console.error(`Fetch error for ${url}:`, error);
+        }
         return null;
     }
-    const body = await ret.text();
-    return body;
 }
-
 
 export async function getCurrent(key, overrides = {}) {
     const { url, parse, genPayload } = { ...sites[key], ...overrides };
