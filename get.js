@@ -235,7 +235,9 @@ async function get(url, payload = {}) {
         signal: AbortSignal.timeout(10000) // 10 second timeout
     };
 
+    const now = (new Date()).toISOString();
     try {
+        console.log(`${now} node:fetch ${url} ${JSON.stringify(options)}`);
         const ret = await fetch(url, options);
         if (ret.status !== 200) {
             return null;
@@ -244,9 +246,9 @@ async function get(url, payload = {}) {
         return body;
     } catch (error) {
         if (error.name === 'AbortError') {
-            console.error(`Request timeout for ${url}`);
+            console.error(`${now} Request timeout for ${url}`);
         } else {
-            console.error(`Fetch error for ${url}:`, error);
+            console.error(`${now} Fetch error for ${url}:`, error);
         }
         return null;
     }
