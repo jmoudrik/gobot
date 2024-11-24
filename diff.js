@@ -30,8 +30,8 @@ function isOlderThan(date, diff) {
         const age = new Date() - parsedDate;
         return age > diff;
     }
-    catch (e){
-		console.log(e);
+    catch (e) {
+        console.log(e);
         return true;
     }
 }
@@ -41,7 +41,8 @@ const goweb_posts_diff = async (olds, news, threshold) => {
     for (const n of news) {
         const flags = [];
 
-        const mem = olds.filter((o) => o.id == n.id);
+        // so that we compare to newest with the same id
+        const mem = olds.filter((o) => o.id == n.id).reverse();
         if (mem.length == 0) {
             if (isOlderThan(n.updated, threshold)) {
                 flags.push('new-but-old');
@@ -56,8 +57,7 @@ const goweb_posts_diff = async (olds, news, threshold) => {
                 flags.push('comments');
             }
             if (o.updated != n.updated) {
-                console.log(o.updated)
-                console.log(n.updated)
+                console.log(`${o.id}: updated: ${o.updated} -> ${n.updated}`);
                 flags.push('updated');
             }
         }
@@ -124,7 +124,12 @@ export async function check(key) {
         ret[kind] = delta;
 
         if (content.length != 0) {
-            console.log(`check ${key}: got ${content.length} ${kind} (of which ${delta.length} new), saving as '${memory_file}'`);
+            const allFlags = delta.flatMap((d) => d.flags);
+            const flagCounter = allFlags.reduce((acc, flag) => {
+                acc[flag] = (acc[flag] ?? 0) + 1;
+                return acc;
+            }, {});
+            console.log(`${(new Date()).toISOString()}: check ${key}: got ${content.length} ${kind} (of which ${delta.length} not in memory)\n\tsaving as '${memory_file}'\n\tdelta flags: ${JSON.stringify(flagCounter)}`);
             save(memory_file, [...(olds.filter((o) => !isOlderThan(o.updated, 10 * threshold))), ...content]);
         }
     }
