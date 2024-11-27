@@ -108,7 +108,7 @@ const sites = {
     'k2ss': {
         posts: {
             // 2 days because it has 1-day precision (so it might be yesterday's midnight); also tz
-            threshold: 3 * ONE_DAY_MS,
+            threshold: 1 * ONE_DAY_MS,
             memory_file: 'posts_old_k2ss.json',
             diff: goweb_posts_diff,
         }
