@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
 import jsdom from "jsdom";
 
+import { OUT } from './OUT.js';
+
 const { JSDOM } = jsdom;
 
 const parseEgfDate = (dateString) => {
@@ -16,6 +18,15 @@ const parseEgfDate = (dateString) => {
         parseInt(minutes)     // minutes
     );
 
+    return date;
+}
+
+const parseYMDDate = (dateString) => {
+    // 2024-11-22
+    const [year, month, day] = dateString.split('-');
+    // Use UTC methods to avoid timezone offset
+    const date = new Date(Date.UTC(year, month - 1, day));
+    //console.log({dateString, year, month, day, date});
     return date;
 }
 
@@ -84,6 +95,31 @@ const sites = {
             }
 
             return { posts, comments };
+        }
+    },
+    'k2ss': {
+        'url': "https://gotoeveryone.k2ss.info/api/titles/",
+        'parse': async (body) => {
+            const data = JSON.parse(body);
+            const posts = [];
+
+            for (const row of data) {
+                const { htmlFileModified, countryName, countryCode, htmlFileName, htmlFileHolding, nameEnglish } = row;
+                const suffix = htmlFileHolding ? '/' + htmlFileHolding : '';
+
+                const link= `https://gotoeveryone.k2ss.info/news/${countryCode}/${htmlFileName}${suffix}`;
+                const p = {
+                    link, 
+                    id:link + htmlFileModified,
+                    updated: parseYMDDate(htmlFileModified).toISOString(),
+                    'updated-nice': htmlFileModified,
+                    title: countryName + ': ' + nameEnglish,
+                    raw: row
+                }
+                posts.push(p);
+            }
+
+            return { posts };
         }
     },
     'egf': {
@@ -223,7 +259,7 @@ const USER_AGENTS = [
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 ];
 
-async function get(url, payload = {}) {
+export async function get(url, payload = {}) {
     // Merge default options with provided payload
     const options = {
         ...payload,
@@ -259,6 +295,7 @@ export async function getCurrent(key, overrides = {}) {
     const payload = genPayload ? genPayload() : undefined;
 
     const body = await get(url, payload);
+
     if (body == null) {
         return []
     }
@@ -269,11 +306,13 @@ export async function getCurrent(key, overrides = {}) {
 
 // use an async main function
 async function main() {
-    const ret = await getCurrent('egd');
-    const { posts, comments } = ret;
+    const ret = await getCurrent('k2ss');
+
+    const { posts } = ret;
     console.log(JSON.stringify(posts, undefined, 2));
 }
 
 //main();
+
 
 

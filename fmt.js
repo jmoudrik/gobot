@@ -93,8 +93,10 @@ const fmtnew_post_goweb = async (p) => {
     return ret;
 }
 
+const isnew = (post) => post.flags.includes("new");
+
 const fmt_if_new = (fmt) => async (post) => {
-    if (post.flags.includes("new")) {
+    if (isnew(post)) {
         return await fmt(post);
     }
     return null;
@@ -184,6 +186,19 @@ const fmtnew_post_omg = async (p) => {
     //console.log(JSON.stringify(embed, undefined, 2));
     return ret;
 }
+
+const fmtall_posts_k2ss = async (posts) => {
+    const ret = ['Novinky: Go News k2ss:'];
+    for(const post of posts){
+        const txt = `- ${post.raw.countryName}: ${post.raw.holding}. ${hyperlink(post.raw.nameEnglish, post.link)}, aktualizováno: ${post['updated-nice']}, držitel: ${post.raw.winnerName}`;
+        ret.push(txt);
+    }
+    if(ret.length == 1){
+        return null;
+    }
+    return ret.join('\n');
+}
+
 
 const shorten = (s, N = 100, hyp = true) => {
     if (s.length < N)
@@ -279,6 +294,16 @@ const sites = {
             sort: (a) => a.reverse(),
             fmt_one: fmt_if_new(fmtnew_post_omg)
         }
+    },
+    'k2ss': {
+        posts: {
+            sort: (a) => {
+                const anew = a.filter(isnew);
+                anew.sort((x, y) => y.title.localeCompare(x.title));
+                return anew;
+            },
+            fmt_all: fmtall_posts_k2ss
+        }
     }
 }
 
@@ -288,14 +313,25 @@ export const fmt = async (key, deltas) => {
     for (const kind of Object.keys(deltas)) {
         if (formatters[kind] == undefined) continue;
 
-        const { sort, fmt_one } = formatters[kind];
+        const { sort, fmt_one, fmt_all } = formatters[kind];
         const updates = deltas[kind];
         console.log(`fmt got ${updates.length}`);
+        const sorted = sort(updates);
 
-        for (const p of sort(updates)) {
-            const msg = await fmt_one(p);
+        if(fmt_all != undefined){
+            console.log(`fmt all`, sorted);
+            const msg = await fmt_all(sorted);
             if (msg != null) {
+                //console.log("MSG", msg)
                 msgs.push({ msg, kind });
+            }
+        } else{
+            console.log(`fmt one by one`);
+            for (const p of sorted) {
+                const msg = await fmt_one(p);
+                if (msg != null) {
+                    msgs.push({ msg, kind });
+                }
             }
         }
     }
@@ -304,12 +340,12 @@ export const fmt = async (key, deltas) => {
 
 
 async function main() {
-    const key = 'goweb';
+    const key = 'k2ss';
     const deltas = await check(key);
     const msgs = await fmt(key, deltas)
     for (const msg of msgs) {
-        //console.log(JSON.stringify(msg, undefined, 2));
-        console.log(JSON.stringify(msg?.embeds, undefined, 2));
+        console.log(JSON.stringify(msg, undefined, 2));
+        //console.log(JSON.stringify(msg?.embeds, undefined, 2));
     }
 }
 

@@ -69,6 +69,8 @@ const goweb_posts_diff = async (olds, news, threshold) => {
     return ret;
 };
 
+// 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 const sites = {
     // the threshold means
@@ -78,31 +80,36 @@ const sites = {
     // in prod, we check every 5 min, so anything new is safely within this limit
     'goweb': {
         comments: {
-            // X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-            threshold: 1 * 24 * 60 * 60 * 1000,
+            // X days
+            threshold: 1 * ONE_DAY_MS,
             memory_file: 'comments_old_goweb.json',
             diff: goweb_posts_diff,
         },
         posts: {
-            // X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-            threshold: 1 * 24 * 60 * 60 * 1000,
+            threshold: 1 * ONE_DAY_MS,
             memory_file: 'posts_old_goweb.json',
             diff: goweb_posts_diff,
         }
     },
     'egf': {
         posts: {
-            // X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-            threshold: 1 * 24 * 60 * 60 * 1000,
+            threshold: 1 * ONE_DAY_MS,
             memory_file: 'posts_old_egf.json',
             diff: goweb_posts_diff,
         }
     },
     'omg': {
         posts: {
-            // X days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 milliseconds/second
-            threshold: 1 * 24 * 60 * 60 * 1000,
+            threshold: 1 * ONE_DAY_MS,
             memory_file: 'posts_old_omg.json',
+            diff: goweb_posts_diff,
+        }
+    },
+    'k2ss': {
+        posts: {
+            // 2 days because it has 1-day precision (so it might be yesterday's midnight); also tz
+            threshold: 3 * ONE_DAY_MS,
+            memory_file: 'posts_old_k2ss.json',
             diff: goweb_posts_diff,
         }
     }
@@ -139,7 +146,7 @@ export async function check(key) {
 
 
 async function main() {
-    const stuff = await check('omg')
+    const stuff = await check('k2ss')
     console.log(JSON.stringify(stuff, undefined, 2));
 }
 

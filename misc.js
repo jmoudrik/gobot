@@ -20,6 +20,7 @@ for (const [key, kind] of [
     ['goweb', 'comments'],
     ['omg', 'posts'],
     ['egf', 'posts'],
+    ['k2ss', 'posts'],
     ['threads', 'hourly'],
     ['threads', 'daily'],
     ['threads', 'weekly'],

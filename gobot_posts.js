@@ -14,7 +14,10 @@ const sites = {
     },
     'omg': {
         interval: 1 * oneMin,
-    }
+    },
+    'k2ss': {
+        interval: 60 * oneMin,
+    },
 };
 
 const refresh = async (key, send_fun, incrementCounter) => {
