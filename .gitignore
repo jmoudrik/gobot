@@ -5,3 +5,10 @@ LOG
 config.sh
 node_modules/
 ecosystem.config.cjs
+
+# gobot memory files
+comments_old_goweb.json
+posts_old_egf.json
+posts_old_goweb.json
+posts_old_k2ss.json
+posts_old_omg.json
