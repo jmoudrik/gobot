@@ -1,8 +1,6 @@
 import fetch from "node-fetch";
 import jsdom from "jsdom";
 
-import { OUT } from './OUT.js';
-
 const { JSDOM } = jsdom;
 
 const parseEgfDate = (dateString) => {
