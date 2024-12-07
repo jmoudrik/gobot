@@ -31,5 +31,5 @@ export const ask_llm = async (thread_name, thread_text) => {
 
 	const summaryMatch = txt.match(/<summary>(.*?)<\/summary>/s);
 	const summary = summaryMatch ? summaryMatch[1].trim() : null
-	return summary;
+    return summary?.replace(/@everyone/g, '**\\@ everyone**');
 }
