@@ -1,4 +1,5 @@
 #!/bin/bash
 
 git pull
-npx pm2 restart ecosystem.config.cjs
+cd 
+npx pm2 restart ./gobot/ecosystem.config.cjs
