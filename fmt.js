@@ -340,7 +340,7 @@ export const fmt = async (key, deltas) => {
 
 
 async function main() {
-    const key = 'k2ss';
+    const key = 'goweb';
     const deltas = await check(key);
     const msgs = await fmt(key, deltas)
     for (const msg of msgs) {

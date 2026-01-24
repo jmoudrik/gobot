@@ -11,7 +11,7 @@ export const sanitize = (text) => {
 
 export const ask_llm = async (thread_name, thread_text) => {
     const msg = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20240620",
+        model: "claude-4-5-haiku-20251001",
         max_tokens: 1000,
         temperature: 0,
         messages: [

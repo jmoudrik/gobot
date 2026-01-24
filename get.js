@@ -29,7 +29,7 @@ const parseYMDDate = (dateString) => {
 }
 
 const parse_goweb_cmt_date = (dateString) => {
-    const cleanedDate = dateString.replace(/[.]|v/g, "").trim();
+    const cleanedDate = dateString.replace(/[.]|v|at/g, "").trim();
     const toks = cleanedDate.replace(/ +/g, ' ').split(' ')
     const [day, month, year, time] = toks;
     const [hours, minutes] = time.split(':');
@@ -78,12 +78,12 @@ const sites = {
 
             for (const li of lis) {
                 const c = {
-                    avatarpic: li.querySelector('span.comment-avatar img').src,
-                    autor: li.querySelector('span.comment-author').textContent,
-                    'updated-nice': li.querySelector('span.comment-date').textContent.trim(),
-                    link: li.querySelector('span.comment-link a')?.href,
-                    article: li.querySelector('span.comment-link a')?.textContent,
-                    comment: li.querySelector('span.comment-excerpt').textContent.trim(),
+                    avatarpic: li.querySelector('.comment-avatar img')?.src,
+                    autor: li.querySelector('.comment-author')?.textContent,
+                    'updated-nice': li.querySelector('.comment-date')?.textContent?.trim(),
+                    link: li.querySelector('.comment-link a')?.href,
+                    article: li.querySelector('.comment-link a')?.textContent,
+                    comment: li.querySelector('.comment-excerpt')?.textContent?.trim(),
                 };
 
                 const toks = c.link?.split('#');

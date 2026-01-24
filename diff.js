@@ -146,7 +146,7 @@ export async function check(key) {
 
 
 async function main() {
-    const stuff = await check('k2ss')
+    const stuff = await check('goweb')
     console.log(JSON.stringify(stuff, undefined, 2));
 }
 
