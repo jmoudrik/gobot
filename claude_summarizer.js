@@ -10,8 +10,8 @@ export const sanitize = (text) => {
 }
 
 export const ask_llm = async (thread_name, thread_text) => {
-    const msg = await anthropic.messages.create({
-        model: "claude-4-5-haiku-20251001",
+    const payload = {
+        model: "claude-4-5-haiku",
         max_tokens: 1000,
         temperature: 0,
         messages: [
@@ -25,7 +25,9 @@ export const ask_llm = async (thread_name, thread_text) => {
                 ]
             }
         ]
-    });
+    };
+    console.log(JSON.stringify(payload, null, 2));
+    const msg = await anthropic.messages.create(payload);
 
     const txt = (msg?.content ?? [])[0]?.text ?? "";
 
