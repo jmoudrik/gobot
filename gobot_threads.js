@@ -157,7 +157,9 @@ const report = async (key, listSince, send_fun, incrementCounter, label, send_to
             }
         }
         if (summary != null && summary.length > 0) {
-            output_rows.push(`- ${header}: ${summary}`);
+            const n = messages.length;
+            const suff = n == 1 ? "zpráva" : n <=4 ? "zprávy" : "zpráv";
+            output_rows.push(`- ${header}: (${messages.length} ${suff}) ${summary}`);
         }
     }
     if (output_rows.length > 0) {
