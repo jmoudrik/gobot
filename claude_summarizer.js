@@ -11,7 +11,7 @@ export const sanitize = (text) => {
 
 export const ask_llm = async (thread_name, thread_text) => {
     const payload = {
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-6",
         max_tokens: 1000,
         temperature: 0,
         messages: [
